@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#172c2d">
+  <meta name="description" content="Explore an island above the clouds. An original 3D open-world adventure with ancient guardians, lost beacons, and a world to awaken.">
+  <title>Aetherfall — Echoes of the Sky</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23172c2d'/%3E%3Cpath d='M32 8 50 32 32 56 14 32Z' fill='none' stroke='%23e1c88a' stroke-width='3'/%3E%3Cpath d='m32 18 8 14-8 14-8-14Z' fill='%239fe5c4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <main id="game" aria-label="Aetherfall 3D adventure">
+    <canvas id="world" aria-label="3D game world"></canvas>
+    <div class="vignette"></div><div id="damage-flash"></div>
+    <section id="title-screen" class="screen">
+      <div class="edition"><span class="small-diamond"></span> AN INDEPENDENT OPEN-WORLD ADVENTURE</div>
+      <div class="title-copy">
+        <div class="eyebrow"><span></span> A WORLD WAITING TO AWAKEN</div>
+        <h1>AETHER<span>FALL</span></h1>
+        <div class="subtitle"><span></span> ECHOES OF THE SKY <span></span></div>
+        <p>The sky remembers what the world forgot.<br>Follow its light. Find your own way.</p>
+        <button id="start" class="primary" disabled><span>Preparing your world</span><b>↗</b></button>
+        <button id="new-game" class="text-button hidden">Begin a new journey</button>
+        <div class="start-note"><span class="key">W A S D</span> Move <i></i> <span class="key">DRAG</span> Look around</div>
+      </div>
+      <div class="title-bottom"><span>AETHERFALL <i> / </i> CHAPTER I</span><span>THE SHATTERED ISLES <span class="small-diamond"></span></span></div>
+      <div class="world-label"><span class="small-diamond"></span><div>THE FIRST LIGHT<small>A journey above the clouds</small></div></div>
+    </section>
+    <section id="hud" class="hidden" aria-label="Game interface">
+      <div class="player-status"><div class="portrait">⟡<span id="level-badge">1</span></div><div class="status-body"><div class="status-name">THE WAYFARER <span id="level-text">LV. 1</span></div><div class="bar health"><div id="health-fill"></div></div><div class="bar stamina"><div id="stamina-fill"></div></div><div class="status-values"><span id="health-text">100 / 100</span><span id="shards">◇ 0</span></div></div></div>
+      <div class="compass"><div id="compass-strip">W <span>· · ·</span> N <span>· · ·</span> E</div><div class="compass-mark">◆</div><div id="region">THE SUNLIT REACH</div><div id="waypoint-bearing" class="hidden"></div></div>
+      <div class="top-actions"><button id="sound-button" class="icon-button" title="Toggle sound" aria-label="Toggle sound">♪</button><button id="pause-button" class="icon-button" title="Pause" aria-label="Pause game">Ⅱ</button></div>
+      <div class="quest"><div class="eyebrow">THE MAIN JOURNEY</div><h2 id="quest-title">A light in the silence</h2><p id="quest-description">Find the keeper at the camp.</p><div class="quest-count" id="quest-count"><span>◇</span> 0 / 3 BEACONS AWAKENED</div></div>
+      <button class="minimap-wrap" id="map-button" aria-label="Open world map"><span class="map-north">N</span><canvas id="minimap" width="240" height="240"></canvas><span class="map-caption">THE SHATTERED ISLES <kbd>M</kbd></span></button>
+      <div id="location-banner" class="hidden"><small>DISCOVERED</small><h2></h2><span>✧</span></div>
+      <div id="enemy-status" class="hidden"><span></span><div class="bar"><div></div></div></div>
+      <div id="toast" role="status" aria-live="polite"></div>
+      <div id="interact" class="hidden"><kbd>E</kbd><span>Speak with the keeper</span></div>
+      <div class="bottom-left"><span class="small-diamond"></span><div id="ambient-label">A quiet wind. An unfamiliar sky.<small>Your journey is saved automatically.</small></div></div>
+      <div class="action-bar"><button id="attack-button" aria-label="Sword attack"><span class="action-icon">⚔</span><kbd>J / CLICK</kbd><small>STRIKE</small></button><button id="dodge-button" aria-label="Dodge"><span class="action-icon dodge-icon">➶</span><kbd>SPACE</kbd><small>DODGE</small></button><button id="heal-button" aria-label="Use healing flask"><span class="action-icon">♜</span><kbd>Q <i id="potion-count">3</i></kbd><small>MEND</small></button><button id="journal-button" aria-label="Open journal"><span class="action-icon">☷</span><kbd>TAB</kbd><small>JOURNAL</small></button></div>
+      <div class="bottom-right"><span><kbd>SHIFT</kbd> Sprint</span><span><kbd>DRAG</kbd> Orbit camera</span><span><kbd>SCROLL</kbd> Zoom</span></div>
+      <div id="touch-controls"><div id="joystick"><div></div></div><button id="touch-interact">E</button></div>
+    </section>
+    <div id="modal-backdrop" class="hidden"><section id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><button id="close-modal" class="modal-close" aria-label="Close dialog">×</button><div id="modal-content"></div></section></div>
+    <div id="error-screen" class="hidden"><h2>The sky is out of reach</h2><p id="error-message">This adventure needs a browser with WebGL 2. Please enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary">Try again</button></div>
+    <noscript>This game requires JavaScript to render the 3D world.</noscript>
+  </main>
+  <script type="module" src="./src/game.js"></script>
+</body>
+</html>
