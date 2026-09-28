@@ -1,5 +1,9 @@
 # Aetherfall — Echoes of the Sky
 
+## [▶ Play Aetherfall](https://coder397mc.github.io/aetherfall/)
+
+**Play free in your browser — no download or account required.**
+
 A playable, single-player 3D open-world fantasy RPG for the browser. Explore a floating island, free its ancient guardians, awaken three beacons in any order, and face the Hollow Warden.
 
 The complete first chapter includes a continuous explorable island, third-person combat, a keeper NPC, sword and health upgrades, experience levels, 45 collectible shards, healing flasks, a world map with custom waypoints, and a conclusion that lets you keep exploring. Progress is saved automatically in the current browser.
