@@ -30,7 +30,15 @@
       <div class="player-status"><div class="portrait">⟡<span id="level-badge">1</span></div><div class="status-body"><div class="status-name">THE WAYFARER <span id="level-text">LV. 1</span></div><div class="bar health"><div id="health-fill"></div></div><div class="bar stamina"><div id="stamina-fill"></div></div><div class="status-values"><span id="health-text">100 / 100</span><span id="shards">◇ 0</span></div></div></div>
       <div class="compass"><div id="compass-strip">W <span>· · ·</span> N <span>· · ·</span> E</div><div class="compass-mark">◆</div><div id="region">THE SUNLIT REACH</div><div id="waypoint-bearing" class="hidden"></div></div>
       <div class="top-actions"><button id="sound-button" class="icon-button" title="Toggle sound" aria-label="Toggle sound">♪</button><button id="pause-button" class="icon-button" title="Pause" aria-label="Pause game">Ⅱ</button></div>
-      <div class="quest"><div class="eyebrow">THE MAIN JOURNEY</div><h2 id="quest-title">A light in the silence</h2><p id="quest-description">Find the keeper at the camp.</p><div class="quest-count" id="quest-count"><span>◇</span> 0 / 3 BEACONS AWAKENED</div></div>
+      <aside class="quest-guide" aria-label="Adventure guide">
+        <button id="guide-toggle" class="guide-toggle" aria-expanded="true" aria-controls="guide-content">✧ Guide: on <kbd>H</kbd></button>
+        <div class="quest" id="guide-content">
+          <div class="eyebrow">WHAT TO DO NEXT</div><h2 id="quest-title">A light in the silence</h2><p id="quest-description">Find the keeper at the camp.</p>
+          <div class="quest-count" id="quest-count"><span>◇</span> 0 / 3 BEACONS AWAKENED</div>
+          <div class="guide-controls guide-desktop"><span><kbd>WASD</kbd> Move · <kbd>DRAG</kbd> Look</span><span><kbd>E</kbd> Interact · <kbd>M</kbd> Map</span><span><kbd>J</kbd> Strike · <kbd>SPACE</kbd> Dodge</span><span><kbd>Q</kbd> Heal · <kbd>SHIFT</kbd> Sprint</span></div>
+          <div class="guide-controls guide-touch">Move with the stick. Drag the world to look. Tap E to interact, the map to navigate, and the bottom buttons to fight, dodge, or heal.</div>
+        </div>
+      </aside>
       <button class="minimap-wrap" id="map-button" aria-label="Open world map"><span class="map-north">N</span><canvas id="minimap" width="240" height="240"></canvas><span class="map-caption">THE SHATTERED ISLES <kbd>M</kbd></span></button>
       <div id="location-banner" class="hidden"><small>DISCOVERED</small><h2></h2><span>✧</span></div>
       <div id="enemy-status" class="hidden"><span></span><div class="bar"><div></div></div></div>
