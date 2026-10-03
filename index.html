@@ -32,6 +32,8 @@
       <div class="top-actions"><button id="sound-button" class="icon-button" title="Toggle sound" aria-label="Toggle sound">♪</button><button id="pause-button" class="icon-button" title="Pause" aria-label="Pause game">Ⅱ</button></div>
       <aside class="quest-guide" aria-label="Adventure guide">
         <button id="guide-toggle" class="guide-toggle" aria-expanded="true" aria-controls="guide-content">✧ Guide: on <kbd>H</kbd></button>
+        <button id="shop-button" class="guide-toggle oracle-button">◇ Camp shop</button>
+        <button id="oracle-button" class="guide-toggle oracle-button">✦ Ask the sky guide</button>
         <div class="quest" id="guide-content">
           <div class="eyebrow">WHAT TO DO NEXT</div><h2 id="quest-title">A light in the silence</h2><p id="quest-description">Find the keeper at the camp.</p>
           <div class="quest-count" id="quest-count"><span>◇</span> 0 / 3 BEACONS AWAKENED</div>
@@ -45,7 +47,7 @@
       <div id="toast" role="status" aria-live="polite"></div>
       <div id="interact" class="hidden"><kbd>E</kbd><span>Speak with the keeper</span></div>
       <div class="bottom-left"><span class="small-diamond"></span><div id="ambient-label">A quiet wind. An unfamiliar sky.<small>Your journey is saved automatically.</small></div></div>
-      <div class="action-bar"><button id="attack-button" aria-label="Sword attack"><span class="action-icon">⚔</span><kbd>J / CLICK</kbd><small>STRIKE</small></button><button id="dodge-button" aria-label="Dodge"><span class="action-icon dodge-icon">➶</span><kbd>SPACE</kbd><small>DODGE</small></button><button id="heal-button" aria-label="Use healing flask"><span class="action-icon">♜</span><kbd>Q <i id="potion-count">3</i></kbd><small>MEND</small></button><button id="journal-button" aria-label="Open journal"><span class="action-icon">☷</span><kbd>TAB</kbd><small>JOURNAL</small></button></div>
+      <div class="action-bar"><button id="attack-button" aria-label="Sword attack"><span class="action-icon">⚔</span><kbd>J / CLICK</kbd><small>STRIKE</small></button><button id="dodge-button" aria-label="Dodge"><span class="action-icon dodge-icon">➶</span><kbd>SPACE</kbd><small>DODGE</small></button><button id="heal-button" aria-label="Use healing flask"><span class="action-icon">♜</span><kbd>Q <i id="potion-count">3</i></kbd><small>MEND</small></button><button id="bow-button" class="hidden" aria-label="Fire bow"><span class="action-icon">➹</span><kbd>R · <i id="arrow-count">0</i></kbd><small>BOW</small></button><button id="journal-button" aria-label="Open journal"><span class="action-icon">☷</span><kbd>TAB</kbd><small>JOURNAL</small></button></div>
       <div class="bottom-right"><span><kbd>SHIFT</kbd> Sprint</span><span><kbd>DRAG</kbd> Orbit camera</span><span><kbd>SCROLL</kbd> Zoom</span></div>
       <div id="touch-controls"><div id="joystick"><div></div></div><button id="touch-interact">E</button></div>
     </section>

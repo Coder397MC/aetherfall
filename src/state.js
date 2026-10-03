@@ -2,11 +2,11 @@ export const WORLD_BOUNDARY = 109;
 export const SAVE_KEY = 'aetherfall-save-v1';
 export const BEACON_IDS = ['grove', 'tide', 'crown'];
 export function freshState() {
-  return { version:1, x:0, z:44, hp:100, xp:0, shards:0, totalShards:0, potions:3, sword:0, vitality:0, beacons:[], collected:[], defeated:[], discovered:[], metKeeper:false, won:false, playTime:0 };
+  return { version:1, chapter:1, bow:false, arrows:0, starSword:false, chapterTwoWon:false, x:0, z:44, hp:100, xp:0, shards:0, totalShards:0, potions:3, sword:0, vitality:0, beacons:[], collected:[], defeated:[], discovered:[], metKeeper:false, won:false, playTime:0 };
 }
 export const levelOf = s => Math.min(10,1+Math.floor(s.xp/120));
 export const maxHealth = s => 100+(levelOf(s)-1)*15+s.vitality*25;
-export const swordDamage = s => 25+(levelOf(s)-1)*4+s.sword*10;
+export const swordDamage = s => 25+(levelOf(s)-1)*4+s.sword*10+(s.starSword?20:0);
 export const upgradeCost = rank => 15+rank*15;
 export function validateSave(raw) {
   if (!raw || raw.version!==1) return null;
@@ -17,6 +17,10 @@ export function validateSave(raw) {
   s.beacons=[...new Set(Array.isArray(raw.beacons)?raw.beacons.filter(b=>BEACON_IDS.includes(b)):[])];
   for(const key of ['collected','defeated','discovered']) s[key]=[...new Set(Array.isArray(raw[key])?raw[key].filter(v=>(typeof v==='string'&&v.length<64)||(Number.isInteger(v)&&v>=0&&v<1000)):[])].slice(0,1000);
   if(Number.isFinite(raw.x)&&Number.isFinite(raw.z)&&Math.hypot(raw.x,raw.z)<=WORLD_BOUNDARY+.001){s.x=raw.x;s.z=raw.z;}
+  s.chapter=raw.chapter===2&&s.beacons.length===3?2:1;
+  s.bow=raw.bow===true||s.chapter===2;s.starSword=raw.starSword===true;
+  s.arrows=Number.isFinite(raw.arrows)?Math.max(0,Math.min(199,Math.floor(raw.arrows))):0;
+  s.chapterTwoWon=s.defeated.includes('storm-regent');
   s.hp=Number.isFinite(raw.hp)?Math.max(1,Math.min(maxHealth(s),raw.hp)):maxHealth(s);
   s.won=s.won&&s.beacons.length===3&&s.defeated.includes('warden');
   if(Number.isFinite(raw.hp)&&raw.hp<=0)respawn(s);

@@ -6,7 +6,7 @@
 
 A playable, single-player 3D open-world fantasy RPG for the browser. Explore a floating island, free its ancient guardians, awaken three beacons in any order, and face the Hollow Warden.
 
-The complete first chapter includes a continuous explorable island, third-person combat, a keeper NPC, sword and health upgrades, experience levels, 45 collectible shards, healing flasks, a world map with custom waypoints, and a conclusion that lets you keep exploring. Progress is saved automatically in the current browser.
+The first chapter includes a continuous explorable island, third-person combat, a keeper NPC, sword and health upgrades, experience levels, 45 collectible shards, healing flasks, a world map with custom waypoints, and a gate to the second chapter. Progress is saved automatically in the current browser.
 
 ## Play locally
 
@@ -28,6 +28,8 @@ A modern browser with WebGL 2 and hardware acceleration is required. Desktop key
 | Orbit camera | Drag with mouse or finger |
 | Zoom | Mouse wheel |
 | Strike | J, click, or sword button |
+| Fire bow | R or bow button |
+| Objective guide | H or guide button |
 | Dodge | Space or dodge button |
 | Sprint | Hold Shift |
 | Jump | F |
@@ -39,7 +41,7 @@ A modern browser with WebGL 2 and hardware acceleration is required. Desktop key
 
 Talk to **Elowen beside the campfire**. Defeat all three guardians at a sanctuary, approach its crystal, then press E. Each beacon restores health, refills flasks, and awards shards. Spend shards with Elowen to improve your sword or maximum health.
 
-Enemies show a red circle before striking. Dodge out of it or time your dodge through the attack. After all three beacons awaken, defeat the Warden at the central gate and return to Elowen to finish the chapter.
+Enemies show a red circle before striking. Dodge out of it or time your dodge through the attack. After all three beacons awaken, use E at the central gate to reach Chapter II. You can also defeat the optional Warden and return to Elowen.
 
 Defeat returns you to camp without removing discoveries or upgrades. Pause → Return to camp is available if you get turned around. A new journey replaces the current save after confirmation. Saves are local to the browser and origin; moving from localhost to GitHub Pages starts a separate save.
 
@@ -99,3 +101,26 @@ Original game code, procedural geometry, and synthesized audio use the [MIT lice
 
 - [Three.js](https://threejs.org/), version 0.170.0 — MIT; `vendor/THREE-LICENSE.txt`.
 - Cormorant Garamond and DM Sans — SIL Open Font License; license files in `vendor/fonts/`.
+
+
+## Two chapters to explore
+
+Awaken the three beacons in Chapter I, then approach the great Aether Gate near the starting area and press **E**. The gate opens as soon as all three lights are restored; the Hollow Warden remains an optional challenge.
+
+Chapter II, **Frostglass Reach**, introduces Glass Prowlers, ranged Frostcasters, and the Storm Regent boss. Your first crossing grants a bow and 30 arrows. Use **R** or **Bow** to shoot the nearest enemy within 32 metres. The Regent fires wider, faster volleys below half health. The southern arch returns you to Chapter I, keeping your equipment and progress.
+
+## Crystal shop
+
+Visit Elowen or the Frostglass trader and choose **Camp shop**. Twenty arrows cost 6 crystals; the permanent Starforged sword costs 35 and adds 20 damage, stacking with existing upgrades. Healing refills cost 5, or rest at camp for free. Chapter II enemies replenish four arrows when defeated.
+
+## Sky guide
+
+**Ask the sky guide** answers questions about the game and your next objective using built-in game knowledge; it does not connect to an AI service. Hints cost 1 shard, explanations 3, and walkthroughs 5. Each additional block of 80 question characters adds 1 shard, up to 400 characters. The price appears before submission. Unsupported questions and insufficient funds never deduct materials.
+
+## Visuals and accessibility
+
+The detailed, rigged hero uses local idle, walk, sprint, and combat animations. Scanned ground textures, normal mapping, environment lighting, soft shadows, atmospheric distance, fine foliage, and a restrained natural palette provide a more detailed fantasy presentation. This remains a small browser RPG, not a photorealistic AAA production. Performance mode is available in the pause menu. The built-in procedural character is retained as a fallback if the detailed asset cannot load.
+
+Existing browser saves migrate automatically. Equipment, chapter progress, and defeated enemies persist. Ground placement follows the rendered terrain triangles, with water-height support restricted to the actual lake.
+
+All runtime assets ship with the game. See [asset credits and licenses](ASSETS.md) for the CC0 character and scanned textures and the vendored Three.js/Draco components.

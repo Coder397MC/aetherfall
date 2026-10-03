@@ -19,3 +19,22 @@
 @media(max-width:700px){.quest-guide{left:16px;top:96px;width:200px;max-height:calc(100dvh - 245px)}.quest-guide .quest{padding:10px 12px}.quest-guide .quest h2{font-size:19px}.quest-guide .quest p{font-size:11px}.guide-controls{font-size:9px;margin-top:8px;padding-top:8px}}
 @media(pointer:coarse){.guide-desktop,.guide-toggle kbd{display:none}.guide-touch{display:block}.guide-toggle{min-height:44px}}
 @media(max-height:600px){.quest-guide{top:105px;max-height:calc(100dvh - 205px)}}
+
+.oracle-button{margin-top:8px;color:#b9e9e0;border-color:#a1ded052}
+.oracle-intro{font-size:13px!important}.oracle-balance{color:#f3dfaa;font-size:12px;margin:16px 0}
+.oracle-form label{display:block;color:#e1d7b8;font-size:12px;margin:14px 0 8px}
+.oracle-form textarea,.oracle-form select{width:100%;box-sizing:border-box;border:1px solid #d8c99850;border-radius:5px;background:#142c29;color:#f4ecd9;padding:12px;font:inherit;font-size:14px}
+.oracle-form textarea{min-height:90px;resize:vertical}.oracle-form textarea:focus,.oracle-form select:focus{outline:2px solid #b3dfce;outline-offset:2px}
+.oracle-suggestions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.oracle-suggestions button{border:1px solid #d8c99840;background:#ffffff08;border-radius:20px;padding:8px 11px;color:#d8e6d8;font:inherit;font-size:11px;cursor:pointer}
+.oracle-quote{font-size:12px;color:#dfd6bb;line-height:1.6;margin:12px 0}.oracle-answer{margin-top:20px;border-left:2px solid #aedbcc;padding:2px 16px;background:#b3dfce08;white-space:pre-line;color:#e1ecdf;font-size:14px;line-height:1.8}.oracle-answer:empty{display:none}
+.oracle-form .primary:disabled{opacity:.45;cursor:not-allowed}
+
+@media(max-width:700px){.action-bar{gap:4px}.action-bar button{width:44px}.action-bar button:first-child{width:48px}.action-bar i{padding-left:2px}}
+
+/* Neutral glass and warm metal accents instead of a green screen tint. */
+:root{--panel:rgba(29,28,25,.9);--gold:#c9b184;--mint:#d1d5c5}
+.vignette{background:radial-gradient(ellipse at 55% 40%,transparent 52%,rgba(20,18,16,.18) 100%)}
+#hud::before{opacity:.6}.quest-guide .quest{background:linear-gradient(135deg,#242621de,#2426219e);border-color:#c6b69540;border-left-color:#bca477}
+.guide-toggle{background:#272a25e8;color:#e3d6bb}.guide-toggle:hover{background:#45473b}
+#modal{background:linear-gradient(140deg,#282c28f5,#191d1cf5)}
+.action-bar button{background:linear-gradient(#3a3d3588,#222723ca)}

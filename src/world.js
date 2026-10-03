@@ -1,3 +1,7 @@
+import {createFoliageMaterial,branchGeometry} from './foliage.js';
+import {heightAt,TERRAIN_RINGS,TERRAIN_SECTORS,TERRAIN_RADIUS} from './terrain.js';
+import {createDetailedCharacter} from './character.js';
+import {ruggedMaterial,surfaceTexture,forestMaterial} from './materials.js';
 import * as THREE from '../vendor/three.module.js';
 export const BEACONS = [
   { id: 'grove', name: 'The Whispering Grove', x: -57, z: -13, color: 0x75ffc5 },
@@ -7,17 +11,13 @@ export const BEACONS = [
 export const CAMP = { x: -9, z: 38 };
 export const GATE = { x: 0, z: -18 };
 export function random(seed = 7) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-export function heightAt(x, z) {
-  const h = 3.2 + Math.sin(x * .047) * 2.3 + Math.cos(z * .045) * 2.5 + Math.sin(x * .11 + z * .06) * .8;
-  const hill = 10 * Math.exp(-((x + 65) ** 2 + (z + 24) ** 2) / 900) + 11 * Math.exp(-(x * x + (z + 85) ** 2) / 1000);
-  const lake = 8 * Math.exp(-((x - 37) ** 2 / 310 + (z - 24) ** 2 / 220));
-  return h + hill - lake;
-}
-const mat = (color, opts = {}) => new THREE.MeshStandardMaterial({ color, roughness: .88, ...opts });
+export {heightAt} from './terrain.js';
+
+const mat = (color, opts = {}) => ruggedMaterial(color,'stone',opts);
 export function createWorld(scene) {
   const rng = random(3483), colliders = [], animated = [], beaconObjects = [], pickups = [], wisps = [];
   const stone = mat(0x969c8a), lightStone = mat(0xc8c5a5), darkStone = mat(0x536b63), gold = mat(0xcba660, { metalness: .6, roughness: .3 });
-  const grass = mat(0xffffff, { vertexColors: true });
+  const grass = forestMaterial('grass');
   const mesh = (geo, material, x = 0, y = 0, z = 0, parent = scene) => {
     const m = new THREE.Mesh(geo, material); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
   };
@@ -25,24 +25,25 @@ export function createWorld(scene) {
   const box = (w, h, d, material, x, y, z, parent = scene) => mesh(new THREE.BoxGeometry(w, h, d), material, x, y, z, parent);
   // A softly lit sky dome follows the horizon, with no image downloads.
   const sky = mesh(new THREE.SphereGeometry(900, 24, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
-    uniforms: { top: { value: new THREE.Color(0x64a9bf) }, bottom: { value: new THREE.Color(0xe8ead0) } },
+    uniforms: { top: { value: new THREE.Color(0x72899e) }, bottom: { value: new THREE.Color(0xd8caba) } },
     vertexShader: 'varying vec3 p; void main(){p=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader: 'uniform vec3 top;uniform vec3 bottom;varying vec3 p;void main(){float h=clamp(normalize(p).y*1.8,0.,1.);gl_FragColor=vec4(mix(bottom,top,pow(h,.65)),1.);}'
   })); sky.castShadow = false; sky.receiveShadow = false;
   // Continuous, vertex-colored terrain.
-  const vertices = [], colors = [], indices = []; const rings = 62, sectors = 192, radius = 113;
+  const vertices = [], colors = [], indices = []; const rings = TERRAIN_RINGS, sectors = TERRAIN_SECTORS, radius = TERRAIN_RADIUS;
   const c = new THREE.Color();
   for (let j = 0; j <= rings; j++) for (let i = 0; i <= sectors; i++) {
     const angle = i / sectors * Math.PI * 2, r = j / rings * radius;
     const x = Math.sin(angle) * r, z = Math.cos(angle) * r, y = heightAt(x, z);
     vertices.push(x, y, z);
     const n = Math.sin(x * .18) * Math.cos(z * .2) * .5 + .5;
-    c.setHSL(.285 + n * .022, .42 + n * .09, .225 + n * .060 + (y > 12 ? .06 : 0));
-    if ((x - 37) ** 2 / 470 + (z - 24) ** 2 / 320 < 1.25) c.set(0xa6ae7c);
+    c.setHSL(.10+n*.015,.045,.69+n*.11);
+    if ((x - 37) ** 2 / 470 + (z - 24) ** 2 / 320 < 1.25) c.set(0xc6bcaa);
     colors.push(c.r, c.g, c.b);
     if (j < rings && i < sectors) { const a = j * (sectors + 1) + i, b = a + sectors + 1; indices.push(a, b, a + 1, a + 1, b, b + 1); }
   }
   const groundGeo = new THREE.BufferGeometry(); groundGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3)); groundGeo.setIndex(indices); groundGeo.computeVertexNormals();
+  groundGeo.setAttribute('uv',new THREE.Float32BufferAttribute(vertices.flatMap((v,i)=>i%3===0?[v/5,vertices[i+2]/5]:[]),2));
   mesh(groundGeo, grass);
   // Island's fractured underside.
   const cliffPos = [], cliffCol = [], cliffIndices = [];
@@ -57,12 +58,12 @@ export function createWorld(scene) {
   function path(points, width) {
     const curve = new THREE.CatmullRomCurve3(points.map(([x,z]) => new THREE.Vector3(x,0,z))); const p=[], uv=[], ids=[];
     for(let i=0;i<=160;i++){const t=i/160, v=curve.getPoint(t), tan=curve.getTangent(t); for(const s of [-1,1]){const x=v.x+tan.z*width*s/2,z=v.z-tan.x*width*s/2; p.push(x,heightAt(x,z)+.045,z);uv.push(t,s);} if(i<160){const n=i*2;ids.push(n,n+2,n+1,n+1,n+2,n+3);}}
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(ids);g.computeVertexNormals();mesh(g,mat(0xb5b58a,{side:THREE.DoubleSide}));
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(p.flatMap((v,i)=>i%3===0?[v/3,p[i+2]/3]:[]),2));g.setIndex(ids);g.computeVertexNormals();const trailMaterial=forestMaterial();trailMaterial.vertexColors=false;trailMaterial.side=THREE.DoubleSide;mesh(g,trailMaterial);
   }
   path([[0,70],[1,44],[-4,25],[0,5],[0,-18],[1,-45],[0,-78]],3.6);
   path([[0,22],[-21,17],[-32,-2],[-57,-13]],2.7);
   path([[0,5],[19,-7],[34,-15],[51,-38]],2.7);
-  const waterMat = new THREE.MeshPhongMaterial({color:0x55b8ae,transparent:true,opacity:.87,shininess:100,specular:0xc7ffe2,side:THREE.DoubleSide});
+  const waterMat = new THREE.MeshPhongMaterial({color:0x627c80,transparent:true,opacity:.78,shininess:100,specular:0xd5dce0,side:THREE.DoubleSide});
   const lake = mesh(new THREE.CircleGeometry(1,80), waterMat,37,1.65,24);lake.rotation.x=-Math.PI/2;lake.scale.set(22,16,1);lake.castShadow=false;
   // Water ripples catch the sunlight.
   for(let i=0;i<17;i++){const ripple=mesh(new THREE.RingGeometry(1,1.055,48),new THREE.MeshBasicMaterial({color:0xccf9d7,transparent:true,opacity:.18,side:THREE.DoubleSide}),37+(rng()-.5)*29,1.68,24+(rng()-.5)*18);ripple.rotation.x=-Math.PI/2;ripple.scale.setScalar(1+rng()*3);animated.push({type:'ripple',object:ripple,phase:rng()*6});}
@@ -75,22 +76,46 @@ export function createWorld(scene) {
     if(Math.hypot(x,z)>105 || Math.abs(x)<12 || Math.hypot(x-CAMP.x,z-CAMP.z)<13 || BEACONS.some(b=>Math.hypot(x-b.x,z-b.z)<12) || ((x-37)**2/750+(z-24)**2/500<1) || Math.hypot(x,z+18)<23)continue;
     if(Math.abs(x+z*.7+22)<5&&z>-15&&z<24)continue;
     if(Math.abs(x+z*.85-10)<5&&x>0&&z<8)continue;
-    trees.push({x,z,y:heightAt(x,z),s: .7+rng()*.8,gold:x<-43&&z<5});
+    trees.push({x,z,y:heightAt(x,z),s: .7+rng()*.8,gold:x<-43&&z<5,pine:rng()<.4});
   }
   const dummy=new THREE.Object3D();
   function instances(geo,material,entries){const m=new THREE.InstancedMesh(geo,material,entries.length);entries.forEach((e,i)=>{dummy.position.set(...e.pos);dummy.rotation.set(...(e.rot||[0,0,0]));dummy.scale.set(...e.scale);dummy.updateMatrix();m.setMatrixAt(i,dummy.matrix);if(e.color)m.setColorAt(i,new THREE.Color(e.color));});m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;}
-  instances(new THREE.CylinderGeometry(.21,.46,1,7),mat(0x665b3e),trees.map(t=>({pos:[t.x,t.y+3.1*t.s,t.z],scale:[t.s,6.2*t.s,t.s]})));
-  const leaves=[];
-  for(const t of trees){colliders.push({x:t.x,z:t.z,r:.75*t.s});for(let k=0;k<5;k++){const a=k*2.4;leaves.push({pos:[t.x+Math.sin(a)*1.7*t.s,t.y+(6+(k%3)*1.1)*t.s,t.z+Math.cos(a)*1.6*t.s],scale:[(2.7+rng())*t.s,(2.2+rng())*t.s,(2.6+rng())*t.s],rot:[rng(),rng(),rng()],color:t.gold?[0xc2c368,0xd6c76d,0xa8b765][k%3]:[0x397968,0x4c896b,0x639571,0x749d70,0x447d65][k%5]});}}
-  instances(new THREE.IcosahedronGeometry(1,1),mat(0xffffff,{flatShading:true}),leaves);
+  instances(new THREE.CylinderGeometry(.21,.46,1,7),ruggedMaterial(0x544532,'wood'),trees.map(t=>({pos:[t.x,t.y+3.1*t.s,t.z],scale:[t.s,6.2*t.s,t.s]})));
+  const windTime={value:0};
+  function windMaterial(material,amount,fade=false){
+    material.onBeforeCompile=shader=>{
+      shader.uniforms.windTime=windTime;
+      shader.vertexShader='uniform float windTime; varying vec3 foliagePosition;\n'+shader.vertexShader;
+      shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+        #ifdef USE_INSTANCING
+        float phase=instanceMatrix[3].x*.17+instanceMatrix[3].z*.13;
+        transformed.x+=sin(windTime*1.2+phase+position.y)*${amount};
+        foliagePosition=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;
+        #else
+        foliagePosition=(modelMatrix*vec4(transformed,1.)).xyz;
+        #endif`);
+      if(fade){shader.fragmentShader='varying vec3 foliagePosition;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
+        float coverage=smoothstep(1.5,4.5,distance(foliagePosition,cameraPosition));
+        float screenNoise=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
+        if(coverage<screenNoise)discard;`);}
+    };material.customProgramCacheKey=()=>`wind-${amount}-${fade}`;return material;
+  }
+  const leaves=[],pineNeedles=[];
+  for(const t of trees){colliders.push({x:t.x,z:t.z,r:.75*t.s});if(t.pine){for(let j=0;j<5;j++)pineNeedles.push({pos:[t.x,t.y+(4+j*1.35)*t.s,t.z],scale:[(3-j*.4)*t.s,3*t.s,(3-j*.4)*t.s],rot:[0,j*.9,0],color:[0x2c4d40,0x365e45,0x42694c][j%3]});continue;}for(let k=0;k<19;k++){const a=k*2.4;leaves.push({pos:[t.x+Math.sin(a)*(1.6+(k%3)*.65)*t.s,t.y+(5.6+(k%5)*.65)*t.s,t.z+Math.cos(a)*(1.5+(k%4)*.45)*t.s],scale:[(1.05+rng()*.7)*t.s,(.8+rng()*.6)*t.s,(1.05+rng()*.7)*t.s],rot:[rng(),rng(),rng()],color:t.gold?[0x9c754b,0xa48b58,0x7c754b][k%3]:[0x46543b,0x596449,0x6b704d,0x7c7c57,0x4d5e42][k%5]});}}
+  instances(branchGeometry(),windMaterial(createFoliageMaterial(),.035,true),leaves.map(e=>({...e,color:0xc3c5ae})));
+  instances(branchGeometry(),windMaterial(createFoliageMaterial(true),.025,true),pineNeedles.map(e=>({...e,color:0xabb7a3})));
   const rocks=[];
   for(let i=0;i<185;i++){const a=rng()*Math.PI*2,r=20+rng()*90,x=Math.sin(a)*r,z=Math.cos(a)*r;if(Math.abs(x)<9||BEACONS.some(b=>Math.hypot(x-b.x,z-b.z)<10)||Math.hypot(x-CAMP.x,z-CAMP.z)<11)continue;const s=.6+rng()*2.1;rocks.push({pos:[x,heightAt(x,z)+s*.35,z],scale:[s,s*.65,s*.85],rot:[rng(),rng()*6,rng()],color:[0x828e7d,0xa3aa8c,0x637e70][i%3]});colliders.push({x,z,r:s*.65});}
-  instances(new THREE.DodecahedronGeometry(1,0),mat(0xffffff,{flatShading:true}),rocks);
+  instances(new THREE.IcosahedronGeometry(1,2),mat(0xffffff,{flatShading:false}),rocks);
+  const pebbles=[],twigs=[];
+  for(let i=0;i<1400;i++){const x=(rng()-.5)*205,z=(rng()-.5)*205;if(heightAt(x,z)<2||Math.hypot(x,z)>106)continue;const size=.04+rng()*.15;pebbles.push({pos:[x,heightAt(x,z)+size*.3,z],scale:[size,size*.55,size*.8],rot:[rng(),rng()*6,rng()],color:i%3?0x737568:0xa89e85});if(i%9===0)twigs.push({pos:[x,heightAt(x,z)+.08,z],scale:[.055,.6+rng()*.5,.055],rot:[Math.PI/2,rng()*6,0]});}
+  instances(new THREE.IcosahedronGeometry(1,0),mat(0xffffff),pebbles);
+  instances(new THREE.CylinderGeometry(1,.6,1,5),ruggedMaterial(0x5c4834,'wood'),twigs);
   // Thousands of grass blades and wildflowers.
   const blades=[],flowers=[];
-  for(let i=0;i<22000;i++){const x=(rng()-.5)*216,z=(rng()-.5)*216;if(Math.hypot(x,z)>108||Math.abs(x)<4||heightAt(x,z)<2||BEACONS.some(b=>Math.hypot(x-b.x,z-b.z)<7))continue;const h=.22+rng()*.48;blades.push({pos:[x,heightAt(x,z)+h/2,z],scale:[.30,h,.30],rot:[0,rng()*6,(rng()-.5)*.3],color:[0x6c9357,0x96ac6c,0x527d55][i%3]});if(i%8===0)flowers.push({pos:[x,heightAt(x,z)+h,z],scale:[.14,.11,.14],color:[0xf0d496,0xc1b2dc,0xe7ebbe][i%3]});}
+  for(let i=0;i<22000;i++){const x=(rng()-.5)*216,z=(rng()-.5)*216;if(Math.hypot(x,z)>108||Math.abs(x)<4||heightAt(x,z)<2||BEACONS.some(b=>Math.hypot(x-b.x,z-b.z)<7))continue;const h=.22+rng()*.48;blades.push({pos:[x,heightAt(x,z)+h/2,z],scale:[.30,h,.30],rot:[0,rng()*6,(rng()-.5)*.3],color:[0x73744e,0x999573,0x5c6348][i%3]});if(i%8===0)flowers.push({pos:[x,heightAt(x,z)+h,z],scale:[.14,.11,.14],color:[0xf0d496,0xc1b2dc,0xe7ebbe][i%3]});}
   const bladeGeo=new THREE.BufferGeometry();bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute([-.3,-.5,0,.05,.5,.06,.3,-.5,0,0,-.5,-.3,.06,.38,.1,0,-.5,.3,-.2,-.5,-.2,-.08,.32,.1,.18,-.5,.2],3));bladeGeo.computeVertexNormals();
-  const grassMesh=instances(bladeGeo,mat(0xffffff,{flatShading:true,side:THREE.DoubleSide}),blades);grassMesh.castShadow=false;
+  const grassMesh=instances(bladeGeo,windMaterial(mat(0xffffff,{flatShading:true,side:THREE.DoubleSide}),.09),blades);grassMesh.castShadow=false;
   const flowerMesh=instances(new THREE.IcosahedronGeometry(1,0),mat(0xffffff),flowers);flowerMesh.castShadow=false;
   // The broken Aether gate: monumental stone and gilded rings.
   const gate = new THREE.Group();gate.position.set(0,heightAt(0,-18),-18);scene.add(gate);
@@ -128,6 +153,9 @@ export function createWorld(scene) {
   const fireLight=new THREE.PointLight(0xffb856,15,12);fireLight.position.set(1,2,0);camp.add(fireLight);
   box(1.8,1.1,1.1,mat(0x8a704b),-3,.6,3,camp);
   const npc=createCharacter(0x385e64,0xd7c797);npc.position.set(CAMP.x+2,heightAt(CAMP.x+2,CAMP.z-3),CAMP.z-3);npc.rotation.y=.3;scene.add(npc);colliders.push({x:npc.position.x,z:npc.position.z,r:.65});
+  for(let i=0;i<7;i++){const z=40+i*.28;const plank=box(2.4,.08,.23,ruggedMaterial(0x69533a,'wood'),-12,heightAt(-12,z)+.07,z);plank.rotation.y=.1;}
+  for(const x of [-11,-5]){const y=heightAt(x,39);cylinder(.09,.12,2.8,ruggedMaterial(0x493c2d,'wood'),x,y+1.4,39);box(.35,.45,.35,darkStone,x,y+2.9,39);const lamp=mesh(new THREE.SphereGeometry(.14,8,6),mat(0xffcb76,{emissive:0xffa345,emissiveIntensity:2.8}),x,y+2.9,39);}
+  const barrelY=heightAt(-12,33);cylinder(.6,.55,1.15,ruggedMaterial(0x775c3a,'wood'),-12,barrelY+.6,33);for(const y of [.25,.95])cylinder(.615,.615,.07,darkStone,-12,barrelY+y,33);
   // Gatherable aether shards; every reward has a stable save identifier.
   for(let i=0;i<45;i++){
     let x,z; if(i<6){x=4+Math.sin(i)*4;z=35-i*4;}else{const a=rng()*6.283,r=15+rng()*79;x=Math.sin(a)*r;z=Math.cos(a)*r;}
@@ -137,8 +165,8 @@ export function createWorld(scene) {
   }
   // Distant floating isles and cloud banks give the world its scale.
   for(let i=0;i<15;i++){const a=i/15*6.283,r=175+rng()*145,x=Math.sin(a)*r,z=Math.cos(a)*r,y=-15+rng()*65,s=12+rng()*24;
-    const island=mesh(new THREE.IcosahedronGeometry(1,1),mat(i%2?0x829e95:0x88aa9b,{flatShading:true}),x,y,z);island.scale.set(s,s*.55,s*.7);
-    const cap=cylinder(s*.75,s*.82,3,mat(0x809c79),x,y+s*.25,z,scene,8);
+    const island=mesh(new THREE.IcosahedronGeometry(1,2),mat(i%2?0x787a75:0x89867e,{flatShading:false}),x,y,z);island.scale.set(s,s*.55,s*.7);
+    const cap=cylinder(s*.75,s*.82,3,mat(0x73786a),x,y+s*.25,z,scene,8);
     if(i%3===0){cylinder(2.5,3,17,lightStone,x,y+s*.25+10,z);cylinder(4.2,3,.8,gold,x,y+s*.25+18,z);}
   }
   const clouds=[];for(let i=0;i<140;i++){const a=rng()*6.283,r=115+rng()*290,s=15+rng()*40;clouds.push({pos:[Math.sin(a)*r,-20+rng()*7,Math.cos(a)*r],scale:[s,4+rng()*7,s*.6],color:i%2?0xd8e3d8:0xe9ecdd});}
@@ -151,33 +179,14 @@ export function createWorld(scene) {
   for(let i=0;i<7;i++){const g=new THREE.Group();for(const s of [-1,1]){const wing=mesh(new THREE.ConeGeometry(.3,2,3),mat(0x3b6261),s*.6,0,0,g);wing.rotation.z=s*1.2;}scene.add(g);wisps.push({object:g,phase:i*.9,radius:25+i*5});}
   return {colliders,beaconObjects,pickups,npc,gate,gateCore,waterMat,
     update(t,dt){
+      windTime.value=t;
       for(const a of animated){if(a.type==='crystal'){a.object.rotation.y=t*.55+a.phase;a.object.position.y=a.baseY+Math.sin(t*1.7+a.phase)*.18;}else if(a.type==='ring'){a.object.rotation.z=t*.13;}else if(a.type==='fire'){a.object.scale.set(.9+Math.sin(t*13)*.12,1.8+Math.sin(t*9)*.3,.9);}else if(a.type==='ripple'){a.object.material.opacity=.10+Math.sin(t+a.phase)*.07;}}
       dust.rotation.y=t*.002;
       for(const w of wisps){const a=t*.045+w.phase;w.object.position.set(Math.sin(a)*w.radius,30+Math.sin(a*3)*4,Math.cos(a)*w.radius-30);w.object.rotation.y=a;w.object.rotation.z=Math.sin(t*3+w.phase)*.13;}
     }
   };
 }
-export function createCharacter(cloakColor = 0x275962, trimColor = 0xd9b974) {
-  const g=new THREE.Group();const add=(geo,color,x,y,z)=>{const m=new THREE.Mesh(geo,mat(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;};
-  const body=add(new THREE.CylinderGeometry(.36,.45,.85,8),cloakColor,0,1.24,0);
-  add(new THREE.CylinderGeometry(.46,.53,.18,8),trimColor,0,.98,0);
-  add(new THREE.SphereGeometry(.28,10,8),0xdebb8a,0,1.94,.04);
-  const hood=add(new THREE.SphereGeometry(.36,10,8,0,Math.PI*2,0,Math.PI*.7),cloakColor,0,2.02,-.05);
-  const cape=add(new THREE.ConeGeometry(.7,1.3,4,1,true),cloakColor,0,1.03,-.24);cape.rotation.y=Math.PI/4;cape.scale.z=.56;
-  add(new THREE.BoxGeometry(.14,.14,.08),trimColor,0,1.6,.34);
-  add(new THREE.CylinderGeometry(.39,.39,.15,10),trimColor,0,1.72,0);
-  add(new THREE.BoxGeometry(.33,.68,.36),0x765b3b,-.12,1.28,-.40);
-  add(new THREE.BoxGeometry(.05,.73,.40),trimColor,-.20,1.30,-.41);
-  for(const side of [-1,1]){const shoulder=add(new THREE.SphereGeometry(.26,8,5),trimColor,side*.42,1.56,0);shoulder.scale.set(1,.5,1.1);}
-  const scarf=add(new THREE.BoxGeometry(.15,.75,.035),trimColor,.27,1.23,-.58);scarf.rotation.z=-.15;
-  const legs=[];for(const s of [-1,1]){const leg=add(new THREE.CylinderGeometry(.13,.14,.73,6),0x344748,s*.2,.46,0);legs.push(leg);add(new THREE.BoxGeometry(.27,.26,.42),0x4c443b,s*.2,.15,.08);}
-  const arms=[];for(const s of [-1,1]){const arm=new THREE.Group();arm.position.set(s*.43,1.53,0);g.add(arm);const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.15,.12,.62,6),mat(cloakColor));sleeve.position.y=-.27;sleeve.castShadow=true;arm.add(sleeve);const hand=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),mat(0xdebb8a));hand.position.y=-.63;arm.add(hand);arms.push(arm);}
-  const sword=new THREE.Group();sword.position.set(0,-.6,.12);arms[1].add(sword);
-  const blade=new THREE.Mesh(new THREE.BoxGeometry(.12,.05,1.3),mat(0xd6eddf,{metalness:.75,roughness:.2}));blade.position.z=.75;sword.add(blade);
-  const guard=new THREE.Mesh(new THREE.BoxGeometry(.5,.12,.12),mat(trimColor,{metalness:.6}));guard.position.z=.14;sword.add(guard);
-  const tip=new THREE.Mesh(new THREE.ConeGeometry(.085,.25,4),mat(0xf5ffff,{metalness:.7}));tip.rotation.x=Math.PI/2;tip.position.z=1.52;sword.add(tip);
-  g.userData={legs,arms,cape,hood,sword};return g;
-}
+export function createCharacter(cloakColor=0x304c48,trimColor=0xb69b67){return createDetailedCharacter(cloakColor,trimColor);}
 export function createEnemy(scene,x,z,tier=1) {
   const g=new THREE.Group();const stone=mat(tier===3?0x524955:0x546461,{flatShading:true}),dark=mat(0x343d41),glow=mat(0xffa283,{emissive:0xff543b,emissiveIntensity:1.4});
   const add=(geo,m,px,py,pz)=>{const o=new THREE.Mesh(geo,m);o.position.set(px,py,pz);o.castShadow=true;g.add(o);return o;};
